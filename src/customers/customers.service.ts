@@ -86,7 +86,7 @@ export class CustomersService {
         city: dto.city,
         department: dto.department,
         document: dto.document,
-        delivered: dto.delivered,
+        deliveryState: dto.deliveryState,
         plateNumber: dto.plateNumber,
         advisorId,
         stateId,
@@ -113,7 +113,9 @@ export class CustomersService {
 
     return this.prisma.customer.update({
       where: { id },
-      data: dto,
+      data: {
+        ...dto,
+      },
       include: { advisor: true, state: true },
     });
   }

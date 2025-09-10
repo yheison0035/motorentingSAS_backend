@@ -25,25 +25,25 @@ model State {
 }
 
 model Customer {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  birthdate   DateTime
-  phone       String
-  address     String
-  city        String
-  department  String
-  document    String
-  delivered   String?
-  plateNumber String?
+  id           Int            @id @default(autoincrement())
+  name         String
+  email        String         @unique
+  birthdate    DateTime
+  phone        String
+  address      String
+  city         String
+  department   String
+  document     String
+  deliveryState DeliveryState?
+  plateNumber   String?
 
-  advisorId   Int?
-  advisor     User?     @relation(fields: [advisorId], references: [id])
+  advisorId     Int?
+  advisor       User?          @relation(fields: [advisorId], references: [id])
 
-  stateId     Int?      
-  state       State?    @relation(fields: [stateId], references: [id])
+  stateId       Int?
+  state         State?         @relation(fields: [stateId], references: [id])
 
-  comments    Comment[]
+  comments      Comment[]
 }
 
 model Comment {
@@ -59,4 +59,9 @@ model Comment {
 enum Role {
   ADMIN
   ASESOR
+}
+
+enum DeliveryState {
+  ENTREGADO
+  PENDIENTE_ENTREGA
 }

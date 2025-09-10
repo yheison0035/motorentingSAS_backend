@@ -4,7 +4,10 @@ import {
   IsOptional,
   IsDateString,
   IsInt,
+  IsEnum,
+  ValidateIf,
 } from 'class-validator';
+import { DeliveryState } from '@prisma/client';
 
 export class CreateCustomerDto {
   @IsString()
@@ -32,10 +35,10 @@ export class CreateCustomerDto {
   document: string;
 
   @IsOptional()
-  @IsString()
-  delivered?: string;
+  @IsEnum(DeliveryState)
+  deliveryState?: DeliveryState;
 
-  @IsOptional()
+  @ValidateIf((o) => o.deliveryState === DeliveryState.ENTREGADO)
   @IsString()
   plateNumber?: string;
 
