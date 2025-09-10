@@ -22,38 +22,49 @@ model State {
   id        Int        @id @default(autoincrement())
   name      String     @unique
   customers Customer[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Customer {
-  id           Int            @id @default(autoincrement())
-  name         String
-  email        String         @unique
-  birthdate    DateTime
-  phone        String
-  address      String
-  city         String
-  department   String
-  document     String
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  birthdate     DateTime
+  phone         String
+  address       String
+  city          String
+  department    String
+  document      String
   deliveryState DeliveryState?
   plateNumber   String?
 
-  advisorId     Int?
-  advisor       User?          @relation(fields: [advisorId], references: [id])
+  advisorId Int?
+  advisor   User?   @relation(fields: [advisorId], references: [id])
 
-  stateId       Int?
-  state         State?         @relation(fields: [stateId], references: [id])
+  stateId   Int?
+  state     State?  @relation(fields: [stateId], references: [id])
 
-  comments      Comment[]
+  comments  Comment[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Comment {
   id          Int      @id @default(autoincrement())
   description String
   date        DateTime @default(now())
+
   customerId  Int
+  customer    Customer @relation(fields: [customerId], references: [id])
+
   createdById Int
   createdBy   User     @relation(fields: [createdById], references: [id])
-  customer    Customer @relation(fields: [customerId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum Role {

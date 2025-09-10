@@ -6,8 +6,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { Role } from '@prisma/client';
+import * as XLSX from 'xlsx';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { AssignMultipleDto } from './dto/assign-multiple.dto';
 
 @Injectable()
 export class CustomersService {
@@ -15,16 +17,23 @@ export class CustomersService {
 
   // Obtener clientes según rol
   async getCustomers(user: any) {
-    if (user.role === Role.ADMIN) {
-      return this.prisma.customer.findMany({
-        include: { advisor: true, comments: true, state: true },
-      });
-    }
+    const customers =
+      user.role === Role.ADMIN
+        ? await this.prisma.customer.findMany({
+            include: { advisor: true, comments: true, state: true },
+            orderBy: { updatedAt: 'desc' },
+          })
+        : await this.prisma.customer.findMany({
+            where: { advisorId: user.userId },
+            include: { advisor: true, comments: true, state: true },
+            orderBy: { updatedAt: 'desc' },
+          });
 
-    return this.prisma.customer.findMany({
-      where: { advisorId: user.userId },
-      include: { advisor: true, comments: true, state: true },
-    });
+    return {
+      success: true,
+      message: 'Clientes obtenidos correctamente',
+      data: customers,
+    };
   }
 
   // Obtener cliente por ID
@@ -34,20 +43,17 @@ export class CustomersService {
       include: { advisor: true, comments: true, state: true },
     });
 
-    if (!customer) {
-      throw new NotFoundException('Cliente no encontrado');
-    }
+    if (!customer) throw new NotFoundException('Cliente no encontrado');
 
     if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
       throw new ForbiddenException('No tienes permiso para ver este cliente');
     }
 
-    return customer;
+    return { success: true, message: 'Cliente obtenido', data: customer };
   }
 
   // Crear cliente
   async createCustomer(dto: CreateCustomerDto, user: any) {
-    // Validar duplicado
     const existing = await this.prisma.customer.findUnique({
       where: { email: dto.email },
     });
@@ -57,7 +63,6 @@ export class CustomersService {
       );
     }
 
-    // Determinar asesor asignado
     let advisorId: number | null | undefined = dto.advisorId;
     if (user.role === Role.ASESOR) {
       advisorId = user.userId;
@@ -67,7 +72,6 @@ export class CustomersService {
 
     const birthdate = new Date(dto.birthdate);
 
-    // Determinar estado asignado
     let stateId = dto.stateId;
     if (!stateId) {
       const defaultState = await this.prisma.state.findUnique({
@@ -76,18 +80,10 @@ export class CustomersService {
       stateId = defaultState?.id;
     }
 
-    return this.prisma.customer.create({
+    const customer = await this.prisma.customer.create({
       data: {
-        name: dto.name,
-        email: dto.email,
+        ...dto,
         birthdate,
-        phone: dto.phone,
-        address: dto.address,
-        city: dto.city,
-        department: dto.department,
-        document: dto.document,
-        deliveryState: dto.deliveryState,
-        plateNumber: dto.plateNumber,
         advisorId,
         stateId,
       },
@@ -96,6 +92,12 @@ export class CustomersService {
         state: true,
       },
     });
+
+    return {
+      success: true,
+      message: 'Cliente creado exitosamente',
+      data: customer,
+    };
   }
 
   // Actualizar cliente
@@ -107,25 +109,25 @@ export class CustomersService {
       throw new ForbiddenException('No tienes permiso');
     }
 
-    if (dto.birthdate) {
-      dto.birthdate = new Date(dto.birthdate as any) as any;
-    }
+    if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
 
-    return this.prisma.customer.update({
+    const updated = await this.prisma.customer.update({
       where: { id },
-      data: {
-        ...dto,
-      },
+      data: { ...dto },
       include: { advisor: true, state: true },
     });
+
+    return { success: true, message: 'Cliente actualizado', data: updated };
   }
 
-  // Eliminar cliente (solo ADMIN)
+  // Eliminar cliente
   async deleteCustomer(id: number, user: any) {
     if (user.role !== Role.ADMIN)
       throw new ForbiddenException('Solo el ADMIN puede eliminar clientes');
 
-    return this.prisma.customer.delete({ where: { id } });
+    await this.prisma.customer.delete({ where: { id } });
+
+    return { success: true, message: 'Cliente eliminado correctamente' };
   }
 
   // Agregar comentario
@@ -139,20 +141,109 @@ export class CustomersService {
       throw new ForbiddenException('No puedes comentar este cliente');
     }
 
-    return this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: { description, customerId, createdById: user.userId },
     });
+
+    return { success: true, message: 'Comentario agregado', data: comment };
   }
 
-  // Reasignar cliente (solo ADMIN)
+  // Reasignar cliente a un asesor
   async assignAdvisor(customerId: number, advisorId: number, user: any) {
     if (user.role !== Role.ADMIN)
       throw new ForbiddenException('Solo ADMIN puede reasignar asesores');
 
-    return this.prisma.customer.update({
+    const updated = await this.prisma.customer.update({
       where: { id: customerId },
       data: { advisorId },
       include: { advisor: true, state: true },
     });
+
+    return { success: true, message: 'Cliente reasignado', data: updated };
+  }
+
+  // Reasignar múltiples clientes
+  async assignMultipleCustomers(dto: AssignMultipleDto, user: any) {
+    if (user.role !== Role.ADMIN)
+      throw new ForbiddenException(
+        'Solo ADMIN puede asignar múltiples clientes',
+      );
+
+    const { customerIds, advisorId } = dto;
+
+    const result = await this.prisma.customer.updateMany({
+      where: { id: { in: customerIds } },
+      data: { advisorId },
+    });
+
+    return {
+      success: true,
+      message: `${result.count} clientes reasignados al asesor ${advisorId}`,
+      data: result,
+    };
+  }
+
+  // Importar clientes desde Excel (solo ADMIN)
+  async importCustomers(file: Express.Multer.File, user: any) {
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede importar clientes');
+    }
+
+    // Leer archivo Excel
+    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+
+    if (!rows.length) {
+      throw new BadRequestException('El archivo está vacío o mal formateado');
+    }
+
+    // Buscar el estado por defecto "Sin Contactar"
+    const defaultState = await this.prisma.state.findUnique({
+      where: { name: 'Sin Contactar' },
+    });
+
+    if (!defaultState) {
+      throw new NotFoundException(
+        'No se encontró el estado por defecto "Sin Contactar"',
+      );
+    }
+
+    // Normalizar datos de clientes
+    const customersData = rows.map((row) => {
+      const customer: any = {
+        name: row['name']?.trim(),
+        email: row['email']?.trim(),
+        phone: row['phone']?.toString().trim(),
+        address: row['address']?.trim(),
+        city: row['city']?.trim(),
+        department: row['department']?.trim(),
+        document: row['document']?.toString().trim(),
+        stateId: defaultState.id, // se asigna el estado "Sin Contactar"
+      };
+
+      // Solo incluir birthdate si viene y es válido
+      if (row['birthdate']) {
+        const parsed = new Date(row['birthdate']);
+        if (!isNaN(parsed.getTime())) {
+          customer.birthdate = parsed;
+        }
+      }
+
+      return customer;
+    });
+
+    // Insertar clientes en la BD ignorando duplicados
+    const result = await this.prisma.customer.createMany({
+      data: customersData,
+      skipDuplicates: true,
+    });
+
+    return {
+      success: true,
+      message: `Importación finalizada: ${result.count} clientes creados (duplicados ignorados)`,
+      count: result.count,
+    };
   }
 }

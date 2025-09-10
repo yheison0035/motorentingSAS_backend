@@ -8,14 +8,17 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CustomersService } from './customers.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { AddCommentDto } from './dto/add-comment.dto';
-import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AssignMultipleDto } from './dto/assign-multiple.dto';
 
 @Controller('customers')
 @UseGuards(JwtAuthGuard)
@@ -90,5 +93,22 @@ export class CustomersController {
     @Req() req,
   ) {
     return this.customersService.assignAdvisor(id, advisorId, req.user);
+  }
+
+  // POST /customers/assign-multiple
+  // Asigna múltiples clientes a un asesor
+  // Solo ADMIN puede usar
+  @Post('/assign-multiple')
+  assignMultipleCustomers(@Body() dto: AssignMultipleDto, @Req() req) {
+    return this.customersService.assignMultipleCustomers(dto, req.user);
+  }
+
+  // POST /customers/import con form-data (campo: file)
+  // Importar clientes desde Excel
+  // Solo ADMIN puede usar
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  importCustomers(@UploadedFile() file: Express.Multer.File, @Req() req) {
+    return this.customersService.importCustomers(file, req.user);
   }
 }
