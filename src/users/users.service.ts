@@ -34,15 +34,20 @@ export class UsersService {
       throw new ConflictException(`El email ${dto.email} ya está registrado`);
     }
 
-    // 2️⃣ Encriptar contraseña
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // 3️⃣ Crear usuario
     return this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
+        name: dto.name ?? undefined,
+        birthdate: dto.birthdate ? new Date(dto.birthdate) : null,
+        phone: dto.phone ?? undefined,
+        address: dto.address ?? undefined,
+        city: dto.city ?? undefined,
+        document: dto.document ?? undefined,
         role: dto.role ?? Role.ASESOR,
+        status: dto.status ?? 'ACTIVE',
       },
     });
   }
@@ -53,11 +58,12 @@ export class UsersService {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado.`);
     }
 
+    if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
+
     return this.prisma.user.update({
       where: { id },
       data: {
         ...dto,
-        role: (dto.role as Role) ?? existingUser.role,
         password: dto.password
           ? await bcrypt.hash(dto.password, 10)
           : existingUser.password,

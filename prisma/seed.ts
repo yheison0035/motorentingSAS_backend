@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -24,6 +25,7 @@ const stateCustomer = [
 ];
 
 async function main() {
+  // 1. Insertar estados
   for (const name of stateCustomer) {
     await prisma.state.upsert({
       where: { name },
@@ -31,6 +33,22 @@ async function main() {
       create: { name },
     });
   }
+
+  // 2. Crear Admin inicial
+  const passwordHash = await bcrypt.hash('Admin123', 10);
+
+  await prisma.user.upsert({
+    where: { email: 'admin@motorenting.com' },
+    update: {},
+    create: {
+      name: 'Yordi',
+      email: 'admin@motorenting.com',
+      password: passwordHash,
+      role: Role.ADMIN,
+    },
+  });
+
+  console.log('Seed completado: Estados + Admin');
 }
 
 main()
