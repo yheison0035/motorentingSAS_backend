@@ -40,7 +40,13 @@ export class CustomersService {
   async getCustomerById(id: number, user: any) {
     const customer = await this.prisma.customer.findUnique({
       where: { id },
-      include: { advisor: true, comments: true, state: true },
+      include: {
+        advisor: true,
+        state: true,
+        comments: {
+          include: { createdBy: true },
+        },
+      },
     });
 
     if (!customer) throw new NotFoundException('Cliente no encontrado');
@@ -150,6 +156,7 @@ export class CustomersService {
 
     const comment = await this.prisma.comment.create({
       data: { description, customerId, createdById: user.userId },
+      include: { createdBy: true },
     });
 
     return { success: true, message: 'Comentario agregado', data: comment };
