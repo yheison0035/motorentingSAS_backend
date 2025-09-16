@@ -20,12 +20,26 @@ export class CustomersService {
     const customers =
       user.role === Role.ADMIN
         ? await this.prisma.customer.findMany({
-            include: { advisor: true, comments: true, state: true },
+            include: {
+              advisor: true,
+              comments: {
+                include: { createdBy: true },
+                orderBy: { createdAt: 'desc' },
+              },
+              state: true,
+            },
             orderBy: { updatedAt: 'desc' },
           })
         : await this.prisma.customer.findMany({
             where: { advisorId: user.userId },
-            include: { advisor: true, comments: true, state: true },
+            include: {
+              advisor: true,
+              comments: {
+                include: { createdBy: true },
+                orderBy: { createdAt: 'desc' },
+              },
+              state: true,
+            },
             orderBy: { updatedAt: 'desc' },
           });
 
