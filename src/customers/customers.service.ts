@@ -49,7 +49,14 @@ export class CustomersService {
       throw new ForbiddenException('No tienes permiso para ver este cliente');
     }
 
-    return { success: true, message: 'Cliente obtenido', data: customer };
+    return {
+      success: true,
+      message: 'Cliente obtenido',
+      data: {
+        ...customer,
+        birthdate: formatDate(customer.birthdate),
+      },
+    };
   }
 
   // Crear cliente
@@ -246,4 +253,9 @@ export class CustomersService {
       count: result.count,
     };
   }
+}
+
+function formatDate(date: Date | null): string | null {
+  if (!date) return null;
+  return date.toISOString().split('T')[0]; // yyyy-mm-dd
 }
