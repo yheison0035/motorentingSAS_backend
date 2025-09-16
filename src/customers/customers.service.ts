@@ -45,6 +45,7 @@ export class CustomersService {
         state: true,
         comments: {
           include: { createdBy: true },
+          orderBy: { createdAt: 'desc' },
         },
       },
     });
