@@ -11,7 +11,6 @@ export class ImportCustomerDto {
   @IsDateString()
   birthdate?: string;
 
-  @IsOptional()
   @IsString()
   phone?: string;
 
@@ -27,7 +26,6 @@ export class ImportCustomerDto {
   @IsString()
   department?: string;
 
-  @IsOptional()
   @IsString()
   document?: string;
 }

@@ -24,7 +24,6 @@ export class CreateUserDto {
   @IsDateString()
   birthdate?: string;
 
-  @IsOptional()
   @IsString()
   phone?: string;
 
@@ -36,7 +35,6 @@ export class CreateUserDto {
   @IsString()
   city?: string;
 
-  @IsOptional()
   @IsString()
   document?: string;
 
