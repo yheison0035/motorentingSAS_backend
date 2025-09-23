@@ -40,6 +40,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  department?: string;
+
+  @IsOptional()
+  @IsString()
   document?: string;
 
   @IsOptional()

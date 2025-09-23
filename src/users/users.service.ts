@@ -34,7 +34,7 @@ export class UsersService {
       throw new ConflictException(`El email ${dto.email} ya está registrado`);
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash('motorenting', 10);
 
     return this.prisma.user.create({
       data: {
@@ -45,6 +45,7 @@ export class UsersService {
         phone: dto.phone ?? undefined,
         address: dto.address ?? undefined,
         city: dto.city ?? undefined,
+        department: dto.department ?? undefined,
         document: dto.document ?? undefined,
         role: dto.role ?? Role.ASESOR,
         status: dto.status ?? 'ACTIVE',

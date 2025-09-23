@@ -35,6 +35,10 @@ export class CreateUserDto {
   @IsString()
   city?: string;
 
+  @IsOptional()
+  @IsString()
+  department?: string;
+
   @IsString()
   document?: string;
 
