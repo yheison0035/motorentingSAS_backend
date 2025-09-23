@@ -2,10 +2,11 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { PrismaService } from 'src/prisma.service';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -13,80 +14,141 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async getUser(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`Usuario con id ${id} no fue encontrado.`);
+  // Obtener todos los usuarios (solo ADMIN)
+  async getUsers(user: any) {
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede listar usuarios');
     }
-    return user;
+
+    const users = await this.prisma.user.findMany();
+    return {
+      success: true,
+      message: 'Usuarios obtenidos correctamente',
+      data: users,
+    };
   }
 
-  async getUsers() {
-    return this.prisma.user.findMany();
+  // Obtener un usuario
+  async getUser(id: number, user: any) {
+    const found = await this.prisma.user.findUnique({ where: { id } });
+    if (!found)
+      throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+
+    if (user.role === Role.ASESOR && user.userId !== id) {
+      throw new ForbiddenException('No tienes permiso para ver este usuario');
+    }
+
+    return {
+      success: true,
+      message: 'Usuario obtenido',
+      data: {
+        ...found,
+        birthdate: formatDate(found.birthdate),
+      },
+    };
   }
 
-  async createUser(dto: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
+  // Crear usuario
+  async createUser(dto: CreateUserDto, user: any) {
+    // Si es asesor, no puede crear usuarios
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede crear usuarios');
+    }
+
+    const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-
-    if (existingUser) {
+    if (existing) {
       throw new ConflictException(`El email ${dto.email} ya está registrado`);
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    return this.prisma.user.create({
+    const created = await this.prisma.user.create({
       data: {
         email: dto.email,
         password: hashedPassword,
-        name: dto.name ?? undefined,
+        name: dto.name?.trim(),
         birthdate: dto.birthdate ? new Date(dto.birthdate) : null,
-        phone: dto.phone ?? undefined,
-        address: dto.address ?? undefined,
-        city: dto.city ?? undefined,
-        department: dto.department ?? undefined,
-        document: dto.document ?? undefined,
+        phone: dto.phone?.trim(),
+        address: dto.address?.trim(),
+        city: dto.city?.trim(),
+        department: dto.department?.trim(),
+        document: dto.document?.trim(),
         role: dto.role ?? Role.ASESOR,
         status: dto.status ?? 'ACTIVE',
       },
     });
+
+    return {
+      success: true,
+      message: 'Usuario creado exitosamente',
+      data: created,
+    };
   }
 
-  async updateUser(id: number, dto: UpdateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({ where: { id } });
-    if (!existingUser) {
-      throw new NotFoundException(`Usuario con id ${id} no fue encontrado.`);
+  // Actualizar usuario
+  async updateUser(id: number, dto: UpdateUserDto, user: any) {
+    const found = await this.prisma.user.findUnique({ where: { id } });
+    if (!found)
+      throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+
+    if (user.role === Role.ASESOR && user.userId !== id) {
+      throw new ForbiddenException(
+        'No tienes permiso para modificar este usuario',
+      );
     }
 
     if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
 
-    return this.prisma.user.update({
+    const updated = await this.prisma.user.update({
       where: { id },
       data: {
         ...dto,
         password: dto.password
           ? await bcrypt.hash(dto.password, 10)
-          : existingUser.password,
+          : found.password,
       },
     });
+
+    return { success: true, message: 'Usuario actualizado', data: updated };
   }
 
-  async deleteUser(id: number) {
-    const existingUser = await this.prisma.user.findUnique({ where: { id } });
-    if (!existingUser) {
-      throw new NotFoundException(`Usuario con id ${id} no fue encontrado.`);
+  // Eliminar usuario (solo ADMIN)
+  async deleteUser(id: number, user: any) {
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede eliminar usuarios');
     }
 
-    return this.prisma.user.delete({ where: { id } });
+    const found = await this.prisma.user.findUnique({ where: { id } });
+    if (!found)
+      throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+
+    await this.prisma.user.delete({ where: { id } });
+
+    return { success: true, message: 'Usuario eliminado correctamente' };
   }
 
-  async updateUserSegment(id: number) {
-    const user = await this.getUser(id);
-    console.log(user);
-    return this.prisma.user.update({
+  // Alternar rol (solo ADMIN)
+  async updateUserSegment(id: number, user: any) {
+    if (user.role !== Role.ADMIN) {
+      throw new ForbiddenException('Solo ADMIN puede cambiar roles');
+    }
+
+    const found = await this.prisma.user.findUnique({ where: { id } });
+    if (!found)
+      throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+
+    const updated = await this.prisma.user.update({
       where: { id },
-      data: { role: user.role === Role.ADMIN ? Role.ASESOR : Role.ADMIN },
+      data: { role: found.role === Role.ADMIN ? Role.ASESOR : Role.ADMIN },
     });
+
+    return { success: true, message: 'Rol actualizado', data: updated };
   }
+}
+
+function formatDate(date: Date | null): string | null {
+  if (!date) return null;
+  return date.toISOString().split('T')[0]; // yyyy-mm-dd
 }
