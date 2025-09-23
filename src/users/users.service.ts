@@ -29,12 +29,12 @@ export class UsersService {
   }
 
   // Obtener un usuario
-  async getUser(id: number, user: any) {
+  async getUser(id: number, user?: any) {
     const found = await this.prisma.user.findUnique({ where: { id } });
     if (!found)
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
 
-    if (user.role === Role.ASESOR && user.userId !== id) {
+    if (user && user.role === Role.ASESOR && user.userId !== id) {
       throw new ForbiddenException('No tienes permiso para ver este usuario');
     }
 
@@ -49,9 +49,8 @@ export class UsersService {
   }
 
   // Crear usuario
-  async createUser(dto: CreateUserDto, user: any) {
-    // Si es asesor, no puede crear usuarios
-    if (user.role !== Role.ADMIN) {
+  async createUser(dto: CreateUserDto, user?: any) {
+    if (user && user.role !== Role.ADMIN) {
       throw new ForbiddenException('Solo ADMIN puede crear usuarios');
     }
 
@@ -88,12 +87,12 @@ export class UsersService {
   }
 
   // Actualizar usuario
-  async updateUser(id: number, dto: UpdateUserDto, user: any) {
+  async updateUser(id: number, dto: UpdateUserDto, user?: any) {
     const found = await this.prisma.user.findUnique({ where: { id } });
     if (!found)
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
 
-    if (user.role === Role.ASESOR && user.userId !== id) {
+    if (user && user.role === Role.ASESOR && user.userId !== id) {
       throw new ForbiddenException(
         'No tienes permiso para modificar este usuario',
       );

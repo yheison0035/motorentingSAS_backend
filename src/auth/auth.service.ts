@@ -24,7 +24,6 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-
     if (!user) throw new UnauthorizedException('Credenciales inválidas');
 
     const isValid = await bcrypt.compare(dto.password, user.password);
@@ -33,7 +32,12 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      success: true,
+      message: 'Login exitoso',
+      data: {
+        access_token: await this.jwtService.signAsync(payload),
+        user,
+      },
     };
   }
 
@@ -42,7 +46,17 @@ export class AuthService {
   }
 
   async changePassword(userId: number, dto: ChangePasswordDto) {
-    const user = await this.usersService.getUser(userId);
+    // ahora getUser devuelve { success, message, data }
+    const result = await this.usersService.getUser(userId, {
+      role: 'ADMIN',
+      userId,
+    });
+
+    if (!result.success || !result.data) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    const user = result.data;
 
     // Validar contraseña actual
     const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
@@ -53,12 +67,11 @@ export class AuthService {
     // Hashear nueva contraseña
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
-    // Guardar nueva contraseña
     await this.prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
     });
 
-    return { message: 'Contraseña actualizada correctamente' };
+    return { success: true, message: 'Contraseña actualizada correctamente' };
   }
 }
