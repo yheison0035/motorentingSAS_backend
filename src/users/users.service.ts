@@ -3,21 +3,24 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import cloudinary from 'src/cloudinary/cloudinary.provider';
-
+import { v2 as Cloudinary } from 'cloudinary';
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject('CLOUDINARY') private cloudinary: typeof Cloudinary,
+  ) {}
 
   // Actualizar avatar
   async updateAvatar(userId: number, file: Express.Multer.File) {
-    const result = await cloudinary.uploader.upload(file.path, {
+    const result = await this.cloudinary.uploader.upload(file.path, {
       folder: 'avatars',
       public_id: `user_${userId}`,
       overwrite: true,
