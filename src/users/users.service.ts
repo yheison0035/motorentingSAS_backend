@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v2 as Cloudinary } from 'cloudinary';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -20,15 +21,31 @@ export class UsersService {
 
   // Actualizar avatar
   async updateAvatar(userId: number, file: Express.Multer.File) {
-    const result = await this.cloudinary.uploader.upload(file.path, {
-      folder: 'avatars',
-      public_id: `user_${userId}`,
-      overwrite: true,
-    });
+    return new Promise(async (resolve, reject) => {
+      const uploadStream = this.cloudinary.uploader.upload_stream(
+        {
+          folder: 'avatars',
+          public_id: `user_${userId}`,
+          overwrite: true,
+        },
+        async (error, uploaded) => {
+          if (error) return reject(error);
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { avatar: result.secure_url },
+          try {
+            const updatedUser = await this.prisma.user.update({
+              where: { id: userId },
+              data: { avatar: uploaded?.secure_url },
+            });
+
+            resolve(updatedUser);
+          } catch (err) {
+            reject(err);
+          }
+        },
+      );
+
+      // Envía el buffer al stream
+      uploadStream.end(file.buffer);
     });
   }
 
