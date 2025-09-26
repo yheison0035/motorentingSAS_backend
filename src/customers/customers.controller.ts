@@ -33,6 +33,14 @@ export class CustomersController {
     return this.customersService.getCustomers(req.user);
   }
 
+  // GET /customers/delivered
+  // ADMIN: todos los entregados
+  // ASESOR: solo sus entregados
+  @Get('/delivered')
+  getDeliveredCustomers(@Req() req) {
+    return this.customersService.getDeliveredCustomers(req.user);
+  }
+
   // GET /customers/:id
   // ADMIN puede consultar cualquier cliente
   // ASESOR solo puede ver sus clientes

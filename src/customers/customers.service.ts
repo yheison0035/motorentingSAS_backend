@@ -15,11 +15,19 @@ import { AssignMultipleDto } from './dto/assign-multiple.dto';
 export class CustomersService {
   constructor(private prisma: PrismaService) {}
 
-  // Obtener clientes según rol
+  // Obtener clientes según rol (activos, excluye entregados)
   async getCustomers(user: any) {
+    const baseWhere: any = {
+      // excluimos los entregados: VENTA (id 18) con plateNumber
+      NOT: {
+        AND: [{ stateId: 18 }, { plateNumber: { not: null } }],
+      },
+    };
+
     const customers =
       user.role === Role.ADMIN
         ? await this.prisma.customer.findMany({
+            where: baseWhere,
             include: {
               advisor: true,
               comments: {
@@ -31,7 +39,7 @@ export class CustomersService {
             orderBy: { updatedAt: 'desc' },
           })
         : await this.prisma.customer.findMany({
-            where: { advisorId: user.userId },
+            where: { ...baseWhere, advisorId: user.userId },
             include: {
               advisor: true,
               comments: {
@@ -46,6 +54,47 @@ export class CustomersService {
     return {
       success: true,
       message: 'Clientes obtenidos correctamente',
+      data: customers,
+    };
+  }
+
+  // Obtener clientes entregados/finalizados
+  async getDeliveredCustomers(user: any) {
+    const baseWhere: any = {
+      stateId: 18,
+      plateNumber: { not: null },
+    };
+
+    const customers =
+      user.role === Role.ADMIN
+        ? await this.prisma.customer.findMany({
+            where: baseWhere,
+            include: {
+              advisor: true,
+              comments: {
+                include: { createdBy: true },
+                orderBy: { createdAt: 'desc' },
+              },
+              state: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+          })
+        : await this.prisma.customer.findMany({
+            where: { ...baseWhere, advisorId: user.userId },
+            include: {
+              advisor: true,
+              comments: {
+                include: { createdBy: true },
+                orderBy: { createdAt: 'desc' },
+              },
+              state: true,
+            },
+            orderBy: { updatedAt: 'desc' },
+          });
+
+    return {
+      success: true,
+      message: 'Clientes entregados obtenidos correctamente',
       data: customers,
     };
   }
