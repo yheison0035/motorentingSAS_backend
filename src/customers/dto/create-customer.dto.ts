@@ -38,6 +38,10 @@ export class CreateCustomerDto {
   @IsEnum(DeliveryState)
   deliveryState?: DeliveryState;
 
+  @IsOptional()
+  @IsDateString()
+  deliveryDate?: string;
+
   @ValidateIf((o) => o.deliveryState === DeliveryState.ENTREGADO)
   @IsString()
   plateNumber?: string;

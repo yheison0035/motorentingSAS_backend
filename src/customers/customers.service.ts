@@ -178,20 +178,21 @@ export class CustomersService {
   }
 
   // Actualizar cliente
-  async updateCustomer(id: number, dto: UpdateCustomerDto) {
-    const customer = await this.prisma.customer.findUnique({
-      where: { id },
-    });
+  async updateCustomer(id: number, dto: UpdateCustomerDto, user: any) {
+    const customer = await this.prisma.customer.findUnique({ where: { id } });
+    if (!customer) throw new NotFoundException('Cliente no encontrado');
 
-    if (!customer) {
-      throw new NotFoundException('Cliente no encontrado');
+    if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
+      throw new ForbiddenException('No tienes permiso');
     }
+
+    if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
 
     if (
       (dto.deliveryState === 'ENTREGADO' || dto.stateId === 18) &&
       !customer.deliveryDate
     ) {
-      dto.deliveryDate = new Date();
+      dto.deliveryDate = new Date().toISOString(); // guarda fecha actual
     }
 
     const updated = await this.prisma.customer.update({
