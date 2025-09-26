@@ -178,23 +178,39 @@ export class CustomersService {
   }
 
   // Actualizar cliente
-  async updateCustomer(id: number, dto: UpdateCustomerDto, user: any) {
-    const customer = await this.prisma.customer.findUnique({ where: { id } });
-    if (!customer) throw new NotFoundException('Cliente no encontrado');
+  async updateCustomer(id: number, dto: UpdateCustomerDto) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id },
+    });
 
-    if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
-      throw new ForbiddenException('No tienes permiso');
+    if (!customer) {
+      throw new NotFoundException('Cliente no encontrado');
     }
 
-    if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
+    if (
+      (dto.deliveryState === 'ENTREGADO' || dto.stateId === 18) &&
+      !customer.deliveryDate
+    ) {
+      dto.deliveryDate = new Date();
+    }
 
     const updated = await this.prisma.customer.update({
       where: { id },
-      data: { ...dto },
-      include: { advisor: true, state: true },
+      data: {
+        ...dto,
+      },
+      include: {
+        advisor: true,
+        state: true,
+        comments: { include: { createdBy: true } },
+      },
     });
 
-    return { success: true, message: 'Cliente actualizado', data: updated };
+    return {
+      success: true,
+      message: 'Cliente actualizado con éxito',
+      data: updated,
+    };
   }
 
   // Eliminar cliente
@@ -208,22 +224,30 @@ export class CustomersService {
   }
 
   // Agregar comentario
-  async addComment(customerId: number, description: string, user: any) {
-    const customer = await this.prisma.customer.findUnique({
-      where: { id: customerId },
-    });
-    if (!customer) throw new NotFoundException('Cliente no encontrado');
-
-    if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
-      throw new ForbiddenException('No puedes comentar este cliente');
-    }
-
+  async addComment(
+    customerId: number,
+    description: string,
+    user: { userId: number },
+  ) {
     const comment = await this.prisma.comment.create({
-      data: { description, customerId, createdById: user.userId },
+      data: {
+        description,
+        customerId,
+        createdById: user.userId,
+      },
       include: { createdBy: true },
     });
 
-    return { success: true, message: 'Comentario agregado', data: comment };
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: { updatedAt: new Date() },
+    });
+
+    return {
+      success: true,
+      message: 'Comentario agregado correctamente',
+      data: comment,
+    };
   }
 
   // Reasignar cliente a un asesor

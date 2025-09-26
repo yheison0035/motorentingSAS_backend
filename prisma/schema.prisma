@@ -49,6 +49,7 @@ model Customer {
   department    String
   document      String
   deliveryState DeliveryState?
+  deliveryDate  DateTime?     
   plateNumber   String?
 
   advisorId Int?
