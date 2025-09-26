@@ -79,6 +79,15 @@ model Comment {
   updatedAt   DateTime @updatedAt
 }
 
+model MotivationMessage {
+  id        Int      @id @default(autoincrement())
+  title     String
+  subtitle  String
+  items     Json    
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum Role {
   ADMIN
   ASESOR
