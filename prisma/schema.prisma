@@ -17,6 +17,7 @@ model User {
   city      String?
   department    String?
   document  String?
+  avatar    String?
 
   password  String
   role      Role       @default(ASESOR)

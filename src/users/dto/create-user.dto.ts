@@ -42,6 +42,9 @@ export class CreateUserDto {
   @IsString()
   document?: string;
 
+  @IsString()
+  avatar?: string;
+
   @IsOptional()
   @IsEnum(Role)
   role?: Role;

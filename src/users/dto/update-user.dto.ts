@@ -47,6 +47,10 @@ export class UpdateUserDto {
   document?: string;
 
   @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @IsOptional()
   @IsEnum(Role)
   role?: Role;
 

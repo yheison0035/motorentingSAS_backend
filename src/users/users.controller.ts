@@ -10,6 +10,8 @@ import {
   Put,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,10 +19,24 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  // Endpoint para subir avatar
+  // Autenticación requerida
+  // Usa Multer para manejar la subida de archivos
+  // El archivo se espera en el campo 'file' del formulario
+  // El avatar se asocia al usuario autenticado (req.user.userId)
+  // El servicio maneja la lógica de subir a Cloudinary y actualizar la URL en la base de datos
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req) {
+    return this.usersService.updateAvatar(req.user.userId, file);
+  }
 
   // Solo ADMIN puede listar todos los usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)

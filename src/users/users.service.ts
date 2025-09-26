@@ -9,10 +9,25 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import cloudinary from 'src/cloudinary/cloudinary.provider';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  // Actualizar avatar
+  async updateAvatar(userId: number, file: Express.Multer.File) {
+    const result = await cloudinary.uploader.upload(file.path, {
+      folder: 'avatars',
+      public_id: `user_${userId}`,
+      overwrite: true,
+    });
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatar: result.secure_url },
+    });
+  }
 
   // Obtener todos los usuarios (solo ADMIN)
   async getUsers(user: any) {
@@ -107,6 +122,7 @@ export class UsersService {
         password: dto.password
           ? await bcrypt.hash(dto.password, 10)
           : found.password,
+        avatar: dto.avatar ?? found.avatar,
       },
     });
 
