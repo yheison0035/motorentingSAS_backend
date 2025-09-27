@@ -29,7 +29,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document); // Ruta => http://localhost:3000/api-docs
 
-  app.enableCors();
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://crm-motorenting.vercel.app'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
   await app.listen(process.env.PORT || 3000);
 }
