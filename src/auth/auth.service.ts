@@ -48,7 +48,7 @@ export class AuthService {
   async changePassword(userId: number, dto: ChangePasswordDto) {
     // ahora getUser devuelve { success, message, data }
     const result = await this.usersService.getUser(userId, {
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       userId,
     });
 

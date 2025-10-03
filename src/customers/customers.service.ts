@@ -25,7 +25,11 @@ export class CustomersService {
       },
     };
 
-    const customers = hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])
+    const customers = hasRole(user.role, [
+      Role.SUPER_ADMIN,
+      Role.ADMIN,
+      Role.COORDINADOR,
+    ])
       ? await this.prisma.customer.findMany({
           where: baseWhere,
           include: {
@@ -65,7 +69,11 @@ export class CustomersService {
       plateNumber: { not: null },
     };
 
-    const customers = hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])
+    const customers = hasRole(user.role, [
+      Role.SUPER_ADMIN,
+      Role.ADMIN,
+      Role.COORDINADOR,
+    ])
       ? await this.prisma.customer.findMany({
           where: baseWhere,
           include: {
@@ -188,7 +196,7 @@ export class CustomersService {
     if (!customer) throw new NotFoundException('Cliente no encontrado');
 
     if (
-      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]) &&
+      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR]) &&
       customer.advisorId !== user.userId
     ) {
       throw new ForbiddenException('No tienes permiso');
@@ -225,7 +233,7 @@ export class CustomersService {
   // Eliminar cliente
   async deleteCustomer(id: number, user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
-      throw new ForbiddenException('Solo el ADMIN puede eliminar clientes');
+      throw new ForbiddenException('No tienes permisos');
 
     await this.prisma.customer.delete({ where: { id } });
 
@@ -261,8 +269,8 @@ export class CustomersService {
 
   // Reasignar cliente a un asesor
   async assignAdvisor(customerId: number, advisorId: number, user: any) {
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
-      throw new ForbiddenException('Solo ADMIN puede reasignar asesores');
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR]))
+      throw new ForbiddenException('No tienes permisos');
 
     const updated = await this.prisma.customer.update({
       where: { id: customerId },
@@ -275,10 +283,8 @@ export class CustomersService {
 
   // Reasignar múltiples clientes
   async assignMultipleCustomers(dto: AssignMultipleDto, user: any) {
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
-      throw new ForbiddenException(
-        'Solo ADMIN puede asignar múltiples clientes',
-      );
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR]))
+      throw new ForbiddenException('No tienes permisos');
 
     const { customerIds, advisorId } = dto;
 
@@ -296,8 +302,8 @@ export class CustomersService {
 
   // Importar clientes desde Excel (solo ADMIN)
   async importCustomers(file: Express.Multer.File, user: any) {
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
-      throw new ForbiddenException('Solo ADMIN puede importar clientes');
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
+      throw new ForbiddenException('No tienes permisos');
     }
 
     // Leer archivo Excel

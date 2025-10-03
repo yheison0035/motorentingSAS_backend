@@ -51,8 +51,8 @@ export class UsersService {
 
   // Obtener todos los usuarios (solo ADMIN)
   async getUsers(user: any) {
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
-      throw new ForbiddenException('Solo ADMIN puede listar usuarios');
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
+      throw new ForbiddenException('No tienes permisos');
     }
 
     const users = await this.prisma.user.findMany();
@@ -87,7 +87,7 @@ export class UsersService {
   // Crear usuario (solo SUPER_ADMIN y ADMIN)
   async createUser(dto: CreateUserDto, user?: any) {
     if (user && !hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
-      throw new ForbiddenException('Solo ADMIN puede crear usuarios');
+      throw new ForbiddenException('No tienes permisos');
     }
 
     const existing = await this.prisma.user.findUnique({
@@ -154,7 +154,7 @@ export class UsersService {
   // Eliminar usuario (solo ADMIN)
   async deleteUser(id: number, user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
-      throw new ForbiddenException('Solo ADMIN puede eliminar usuarios');
+      throw new ForbiddenException('No tienes permisos');
     }
 
     const found = await this.prisma.user.findUnique({ where: { id } });
@@ -170,7 +170,7 @@ export class UsersService {
   // Alternar rol (solo ADMIN)
   async updateUserSegment(id: number, user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
-      throw new ForbiddenException('Solo ADMIN puede cambiar roles');
+      throw new ForbiddenException('No tienes permisos');
     }
 
     const found = await this.prisma.user.findUnique({ where: { id } });
