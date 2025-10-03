@@ -5,12 +5,13 @@ import {
   ForbiddenException,
   Inject,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { v2 as Cloudinary } from 'cloudinary';
+import { hasRole } from 'src/common/role-check.util';
 
 @Injectable()
 export class UsersService {
@@ -44,14 +45,13 @@ export class UsersService {
         },
       );
 
-      // Envía el buffer al stream
       uploadStream.end(file.buffer);
     });
   }
 
   // Obtener todos los usuarios (solo ADMIN)
   async getUsers(user: any) {
-    if (user.role !== Role.ADMIN) {
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
       throw new ForbiddenException('Solo ADMIN puede listar usuarios');
     }
 
@@ -66,10 +66,11 @@ export class UsersService {
   // Obtener un usuario
   async getUser(id: number, user?: any) {
     const found = await this.prisma.user.findUnique({ where: { id } });
-    if (!found)
+    if (!found) {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+    }
 
-    if (user && user.role === Role.ASESOR && user.userId !== id) {
+    if (user && hasRole(user.role, [Role.ASESOR]) && user.userId !== id) {
       throw new ForbiddenException('No tienes permiso para ver este usuario');
     }
 
@@ -83,9 +84,9 @@ export class UsersService {
     };
   }
 
-  // Crear usuario
+  // Crear usuario (solo SUPER_ADMIN y ADMIN)
   async createUser(dto: CreateUserDto, user?: any) {
-    if (user && user.role !== Role.ADMIN) {
+    if (user && !hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
       throw new ForbiddenException('Solo ADMIN puede crear usuarios');
     }
 
@@ -121,13 +122,14 @@ export class UsersService {
     };
   }
 
-  // Actualizar usuario
+  // Actualizar usuario (propio o ADMIN)
   async updateUser(id: number, dto: UpdateUserDto, user?: any) {
     const found = await this.prisma.user.findUnique({ where: { id } });
-    if (!found)
+    if (!found) {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+    }
 
-    if (user && user.role === Role.ASESOR && user.userId !== id) {
+    if (user && hasRole(user.role, [Role.ASESOR]) && user.userId !== id) {
       throw new ForbiddenException(
         'No tienes permiso para modificar este usuario',
       );
@@ -151,13 +153,14 @@ export class UsersService {
 
   // Eliminar usuario (solo ADMIN)
   async deleteUser(id: number, user: any) {
-    if (user.role !== Role.ADMIN) {
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
       throw new ForbiddenException('Solo ADMIN puede eliminar usuarios');
     }
 
     const found = await this.prisma.user.findUnique({ where: { id } });
-    if (!found)
+    if (!found) {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+    }
 
     await this.prisma.user.delete({ where: { id } });
 
@@ -166,23 +169,27 @@ export class UsersService {
 
   // Alternar rol (solo ADMIN)
   async updateUserSegment(id: number, user: any) {
-    if (user.role !== Role.ADMIN) {
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
       throw new ForbiddenException('Solo ADMIN puede cambiar roles');
     }
 
     const found = await this.prisma.user.findUnique({ where: { id } });
-    if (!found)
+    if (!found) {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
+    }
 
     const updated = await this.prisma.user.update({
       where: { id },
-      data: { role: found.role === Role.ADMIN ? Role.ASESOR : Role.ADMIN },
+      data: {
+        role: found.role === Role.SUPER_ADMIN ? Role.ASESOR : Role.SUPER_ADMIN,
+      },
     });
 
     return { success: true, message: 'Rol actualizado', data: updated };
   }
 }
 
+// Utilidad local
 function formatDate(date: Date | null): string | null {
   if (!date) return null;
   return date.toISOString().split('T')[0]; // yyyy-mm-dd

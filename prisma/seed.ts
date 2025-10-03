@@ -42,9 +42,9 @@ async function main() {
     update: {},
     create: {
       name: 'Yordi',
-      email: 'admin@motorenting.com',
+      email: 'yordi@motorenting.com',
       password: passwordHash,
-      role: Role.ADMIN,
+      role: Role.SUPER_ADMIN,
     },
   });
 

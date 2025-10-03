@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { AssignMultipleDto } from './dto/assign-multiple.dto';
+import { hasRole } from 'src/common/role-check.util';
 
 @Injectable()
 export class CustomersService {
@@ -24,32 +25,31 @@ export class CustomersService {
       },
     };
 
-    const customers =
-      user.role === Role.ADMIN
-        ? await this.prisma.customer.findMany({
-            where: baseWhere,
-            include: {
-              advisor: true,
-              comments: {
-                include: { createdBy: true },
-                orderBy: { createdAt: 'desc' },
-              },
-              state: true,
+    const customers = hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])
+      ? await this.prisma.customer.findMany({
+          where: baseWhere,
+          include: {
+            advisor: true,
+            comments: {
+              include: { createdBy: true },
+              orderBy: { createdAt: 'desc' },
             },
-            orderBy: { updatedAt: 'desc' },
-          })
-        : await this.prisma.customer.findMany({
-            where: { ...baseWhere, advisorId: user.userId },
-            include: {
-              advisor: true,
-              comments: {
-                include: { createdBy: true },
-                orderBy: { createdAt: 'desc' },
-              },
-              state: true,
+            state: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : await this.prisma.customer.findMany({
+          where: { ...baseWhere, advisorId: user.userId },
+          include: {
+            advisor: true,
+            comments: {
+              include: { createdBy: true },
+              orderBy: { createdAt: 'desc' },
             },
-            orderBy: { updatedAt: 'desc' },
-          });
+            state: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        });
 
     return {
       success: true,
@@ -65,32 +65,31 @@ export class CustomersService {
       plateNumber: { not: null },
     };
 
-    const customers =
-      user.role === Role.ADMIN
-        ? await this.prisma.customer.findMany({
-            where: baseWhere,
-            include: {
-              advisor: true,
-              comments: {
-                include: { createdBy: true },
-                orderBy: { createdAt: 'desc' },
-              },
-              state: true,
+    const customers = hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])
+      ? await this.prisma.customer.findMany({
+          where: baseWhere,
+          include: {
+            advisor: true,
+            comments: {
+              include: { createdBy: true },
+              orderBy: { createdAt: 'desc' },
             },
-            orderBy: { updatedAt: 'desc' },
-          })
-        : await this.prisma.customer.findMany({
-            where: { ...baseWhere, advisorId: user.userId },
-            include: {
-              advisor: true,
-              comments: {
-                include: { createdBy: true },
-                orderBy: { createdAt: 'desc' },
-              },
-              state: true,
+            state: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : await this.prisma.customer.findMany({
+          where: { ...baseWhere, advisorId: user.userId },
+          include: {
+            advisor: true,
+            comments: {
+              include: { createdBy: true },
+              orderBy: { createdAt: 'desc' },
             },
-            orderBy: { updatedAt: 'desc' },
-          });
+            state: true,
+          },
+          orderBy: { updatedAt: 'desc' },
+        });
 
     return {
       success: true,
@@ -115,7 +114,10 @@ export class CustomersService {
 
     if (!customer) throw new NotFoundException('Cliente no encontrado');
 
-    if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
+    if (
+      hasRole(user.role, [Role.ASESOR]) &&
+      customer.advisorId !== user.userId
+    ) {
       throw new ForbiddenException('No tienes permiso para ver este cliente');
     }
 
@@ -141,9 +143,12 @@ export class CustomersService {
     }
 
     let advisorId: number | null | undefined = dto.advisorId;
-    if (user.role === Role.ASESOR) {
+    if (hasRole(user.role, [Role.ASESOR])) {
       advisorId = user.userId;
-    } else if (user.role === Role.ADMIN && !dto.advisorId) {
+    } else if (
+      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]) &&
+      !dto.advisorId
+    ) {
       advisorId = null;
     }
 
@@ -182,7 +187,10 @@ export class CustomersService {
     const customer = await this.prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new NotFoundException('Cliente no encontrado');
 
-    if (user.role === Role.ASESOR && customer.advisorId !== user.userId) {
+    if (
+      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]) &&
+      customer.advisorId !== user.userId
+    ) {
       throw new ForbiddenException('No tienes permiso');
     }
 
@@ -216,7 +224,7 @@ export class CustomersService {
 
   // Eliminar cliente
   async deleteCustomer(id: number, user: any) {
-    if (user.role !== Role.ADMIN)
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
       throw new ForbiddenException('Solo el ADMIN puede eliminar clientes');
 
     await this.prisma.customer.delete({ where: { id } });
@@ -253,7 +261,7 @@ export class CustomersService {
 
   // Reasignar cliente a un asesor
   async assignAdvisor(customerId: number, advisorId: number, user: any) {
-    if (user.role !== Role.ADMIN)
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
       throw new ForbiddenException('Solo ADMIN puede reasignar asesores');
 
     const updated = await this.prisma.customer.update({
@@ -267,7 +275,7 @@ export class CustomersService {
 
   // Reasignar múltiples clientes
   async assignMultipleCustomers(dto: AssignMultipleDto, user: any) {
-    if (user.role !== Role.ADMIN)
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
       throw new ForbiddenException(
         'Solo ADMIN puede asignar múltiples clientes',
       );
@@ -288,7 +296,7 @@ export class CustomersService {
 
   // Importar clientes desde Excel (solo ADMIN)
   async importCustomers(file: Express.Multer.File, user: any) {
-    if (user.role !== Role.ADMIN) {
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN])) {
       throw new ForbiddenException('Solo ADMIN puede importar clientes');
     }
 

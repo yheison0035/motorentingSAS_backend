@@ -90,7 +90,9 @@ model MotivationMessage {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
+  COORDINADOR
   ASESOR
 }
 
