@@ -40,7 +40,7 @@ export class UsersController {
 
   // Solo ADMIN puede listar todos los usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Get()
   getAllUsers(@Req() req) {
     return this.usersService.getUsers(req.user); // se pasa user para validar permisos en el service
@@ -56,7 +56,7 @@ export class UsersController {
 
   // Solo ADMIN puede crear usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Post()
   createUser(@Body() user: CreateUserDto, @Req() req) {
     return this.usersService.createUser(user, req.user);
@@ -64,7 +64,7 @@ export class UsersController {
 
   // ADMIN puede actualizar cualquier usuario
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('/:id')
   updateUser(
     @Param('id', ParseIntPipe) id: number,
@@ -76,7 +76,7 @@ export class UsersController {
 
   // ADMIN puede eliminar usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Delete('/:id')
   deleteUser(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.usersService.deleteUser(id, req.user);
@@ -84,7 +84,7 @@ export class UsersController {
 
   // ADMIN puede alternar rol (ejemplo)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN')
   @Patch('/:id/toggle-role')
   updateUserSegment(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.usersService.updateUserSegment(id, req.user);
