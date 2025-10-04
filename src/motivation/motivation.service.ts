@@ -7,7 +7,7 @@ import { UpdateMotivationDto } from './dto/update-motivation.dto';
 export class MotivationService {
   constructor(private prisma: PrismaService) {}
 
-  async getMessages() {
+  async getMessage() {
     const messages = await this.prisma.motivationMessage.findMany({
       orderBy: { createdAt: 'desc' },
     });
