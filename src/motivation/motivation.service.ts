@@ -7,12 +7,15 @@ import { UpdateMotivationDto } from './dto/update-motivation.dto';
 export class MotivationService {
   constructor(private prisma: PrismaService) {}
 
-  async getMessage() {
-    const message = await this.prisma.motivationMessage.findFirst({
+  async getMessages() {
+    const messages = await this.prisma.motivationMessage.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    if (!message) throw new NotFoundException('No hay mensajes motivacionales');
-    return { success: true, data: message };
+
+    return {
+      success: true,
+      data: messages ?? [],
+    };
   }
 
   async create(dto: CreateMotivationDto) {
