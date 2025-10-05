@@ -30,6 +30,18 @@ export class UsersController {
     @Inject('CLOUDINARY') private cloudinary: typeof Cloudinary,
   ) {}
 
+  @Get('test-cloudinary')
+  async testCloudinary() {
+    return this.cloudinary.uploader.upload(
+      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+      {
+        folder: 'avatars',
+        public_id: 'test_image',
+        overwrite: true,
+      },
+    );
+  }
+
   // Endpoint para subir avatar
   // Autenticación requerida
   // Usa Multer para manejar la subida de archivos
@@ -92,17 +104,5 @@ export class UsersController {
   @Patch('/:id/toggle-role')
   updateUserSegment(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.usersService.updateUserSegment(id, req.user);
-  }
-
-  @Get('test-cloudinary')
-  async testCloudinary() {
-    return this.cloudinary.uploader.upload(
-      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
-      {
-        folder: 'avatars',
-        public_id: 'test_image',
-        overwrite: true,
-      },
-    );
   }
 }
