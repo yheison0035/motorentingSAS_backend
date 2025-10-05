@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-/* import * as bcrypt from 'bcrypt'; */
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -26,8 +25,17 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document); // Ruta => http://localhost:3000/api-docs
 
-  app.enableCors();
+  app.enableCors({
+    origin: [
+      'http://localhost:3000',
+      'https://crm-motorenting.vercel.app',
+      'https://motorentingsasfrontend-production.up.railway.app', // si tienes un dominio en producción
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true,
+  });
 
-  await app.listen(process.env.PORT || 3001);
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
