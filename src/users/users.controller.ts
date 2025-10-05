@@ -46,11 +46,14 @@ export class UsersController {
       console.error('❌ Error subiendo a Cloudinary desde Railway:', error);
       return {
         status: 'error',
-        message: error.message,
-        name: error.name,
-        stack: error.stack,
+        raw: JSON.stringify(error, Object.getOwnPropertyNames(error)),
       };
     }
+  }
+
+  @Get('env-check')
+  getEnv() {
+    return process.env.CLOUDINARY_URL || 'CLOUDINARY_URL not set';
   }
 
   // Endpoint para subir avatar
