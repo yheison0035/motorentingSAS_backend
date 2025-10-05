@@ -195,10 +195,7 @@ export class CustomersService {
     const customer = await this.prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new NotFoundException('Cliente no encontrado');
 
-    if (
-      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR]) &&
-      customer.advisorId !== user.userId
-    ) {
+    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
       throw new ForbiddenException('No tienes permiso');
     }
 

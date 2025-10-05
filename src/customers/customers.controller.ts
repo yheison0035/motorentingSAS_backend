@@ -26,7 +26,7 @@ export class CustomersController {
   constructor(private customersService: CustomersService) {}
 
   // GET /customers
-  // ADMIN: obtiene todos los clientes con comentarios y asesor asignado
+  // SUPER_ADMIN y ADMIN: obtiene todos los clientes con comentarios y asesor asignado
   // ASESOR: solo sus clientes
   @Get()
   getAllCustomers(@Req() req) {
@@ -34,7 +34,7 @@ export class CustomersController {
   }
 
   // GET /customers/delivered
-  // ADMIN: todos los entregados
+  // SUPER_ADMIN y ADMIN: todos los entregados
   // ASESOR: solo sus entregados
   @Get('/delivered')
   getDeliveredCustomers(@Req() req) {
@@ -42,7 +42,7 @@ export class CustomersController {
   }
 
   // GET /customers/:id
-  // ADMIN puede consultar cualquier cliente
+  // SUPER_ADMIN y ADMIN puede consultar cualquier cliente
   // ASESOR solo puede ver sus clientes
   @Get('/:id')
   getCustomerById(@Param('id', ParseIntPipe) id: number, @Req() req) {
@@ -51,7 +51,7 @@ export class CustomersController {
 
   // POST /customers
   // Crea un cliente
-  // ADMIN puede asignar cualquier asesor
+  // SUPER_ADMIN y ADMIN puede asignar cualquier asesor
   // ASESOR solo se asigna a sí mismo
   @Post()
   createCustomer(@Body() dto: CreateCustomerDto, @Req() req) {
@@ -60,7 +60,7 @@ export class CustomersController {
 
   // PUT /customers/:id
   // Actualiza un cliente existente
-  // ADMIN puede actualizar cualquiera
+  // SUPER_ADMIN y ADMIN puede actualizar cualquiera
   // ASESOR solo sus clientes
   @Put('/:id')
   updateCustomer(
@@ -72,7 +72,7 @@ export class CustomersController {
   }
 
   // DELETE /customers/:id
-  // Solo ADMIN puede eliminar clientes
+  // Solo SUPER_ADMIN y ADMIN puede eliminar clientes
   @Delete('/:id')
   deleteCustomer(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.customersService.deleteCustomer(id, req.user);
@@ -80,7 +80,7 @@ export class CustomersController {
 
   // POST /customers/:id/comments
   // Agrega un comentario al cliente
-  // ADMIN: cualquier cliente
+  // SUPER_ADMIN y ADMIN: cualquier cliente
   // ASESOR: solo sus clientes
   @Post('/:id/comments')
   addComment(
@@ -93,7 +93,7 @@ export class CustomersController {
 
   // POST /customers/:id/assign/:advisorId
   // Reasigna un cliente a otro asesor
-  // Solo ADMIN puede usar
+  // Solo SUPER_ADMIN y ADMIN puede usar
   @Post('/:id/assign/:advisorId')
   assignAdvisor(
     @Param('id', ParseIntPipe) id: number,
@@ -105,7 +105,7 @@ export class CustomersController {
 
   // POST /customers/assign-multiple
   // Asigna múltiples clientes a un asesor
-  // Solo ADMIN puede usar
+  // Solo SUPER_ADMIN y ADMIN puede usar
   @Post('/assign-multiple')
   assignMultipleCustomers(@Body() dto: AssignMultipleDto, @Req() req) {
     return this.customersService.assignMultipleCustomers(dto, req.user);
@@ -113,7 +113,7 @@ export class CustomersController {
 
   // POST /customers/import con form-data (campo: file)
   // Importar clientes desde Excel
-  // Solo ADMIN puede usar
+  // Solo SUPER_ADMIN y ADMIN puede usar
   @Post('import')
   @UseInterceptors(FileInterceptor('file'))
   importCustomers(@UploadedFile() file: Express.Multer.File, @Req() req) {

@@ -49,7 +49,7 @@ export class UsersService {
     });
   }
 
-  // Obtener todos los usuarios (solo ADMIN)
+  // Obtener todos los usuarios (solo SUPER_ADMIN y ADMIN)
   async getUsers(user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
       throw new ForbiddenException('No tienes permisos');
