@@ -30,32 +30,6 @@ export class UsersController {
     @Inject('CLOUDINARY') private cloudinary: typeof Cloudinary,
   ) {}
 
-  @Get('test-cloudinary')
-  async testCloudinary() {
-    try {
-      const result = await this.cloudinary.uploader.upload(
-        'https://res.cloudinary.com/demo/image/upload/sample.jpg',
-        {
-          folder: 'avatars',
-          public_id: 'test_image',
-          overwrite: true,
-        },
-      );
-      return result;
-    } catch (error) {
-      console.error('❌ Error subiendo a Cloudinary desde Railway:', error);
-      return {
-        status: 'error',
-        raw: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-      };
-    }
-  }
-
-  @Get('env-check')
-  getEnv() {
-    return process.env.CLOUDINARY_URL || 'CLOUDINARY_URL not set';
-  }
-
   // Endpoint para subir avatar
   // Autenticación requerida
   // Usa Multer para manejar la subida de archivos
