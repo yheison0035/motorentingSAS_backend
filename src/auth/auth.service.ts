@@ -46,25 +46,19 @@ export class AuthService {
   }
 
   async changePassword(userId: number, dto: ChangePasswordDto) {
-    // ahora getUser devuelve { success, message, data }
-    const result = await this.usersService.getUser(userId, {
-      role: 'SUPER_ADMIN',
-      userId,
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    if (!result.success || !result.data) {
+    if (!user) {
       throw new UnauthorizedException('Usuario no encontrado');
     }
 
-    const user = result.data;
-
-    // Validar contraseña actual
     const isMatch = await bcrypt.compare(dto.currentPassword, user.password);
     if (!isMatch) {
       throw new UnauthorizedException('La contraseña actual es incorrecta');
     }
 
-    // Hashear nueva contraseña
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
 
     await this.prisma.user.update({
