@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -19,6 +20,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { AddCommentDto } from './dto/add-comment.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AssignMultipleDto } from './dto/assign-multiple.dto';
+import type { Response } from 'express';
 
 @Controller('customers')
 @UseGuards(JwtAuthGuard)
@@ -39,6 +41,24 @@ export class CustomersController {
   @Get('/delivered')
   getDeliveredCustomers(@Req() req) {
     return this.customersService.getDeliveredCustomers(req.user);
+  }
+
+  @Get('/delivered/export')
+  async exportDeliveredCustomers(@Req() req, @Res() res: Response) {
+    const buffer = await this.customersService.exportDeliveredCustomersExcel(
+      req.user,
+    );
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=clientes_entregados_${Date.now()}.xlsx`,
+    );
+
+    res.send(buffer);
   }
 
   // GET /customers/:id

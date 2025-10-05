@@ -11,6 +11,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { AssignMultipleDto } from './dto/assign-multiple.dto';
 import { hasRole } from 'src/common/role-check.util';
+import { Workbook } from 'exceljs';
 
 @Injectable()
 export class CustomersService {
@@ -104,6 +105,48 @@ export class CustomersService {
       message: 'Clientes entregados obtenidos correctamente',
       data: customers,
     };
+  }
+
+  async exportDeliveredCustomersExcel(user: any): Promise<ArrayBuffer> {
+    const { data } = await this.getDeliveredCustomers(user);
+
+    const workbook = new Workbook();
+    const sheet = workbook.addWorksheet('Clientes Entregados');
+
+    sheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'Nombre', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'Teléfono', key: 'phone', width: 15 },
+      { header: 'Ciudad', key: 'city', width: 20 },
+      { header: 'Placa', key: 'plateNumber', width: 15 },
+      { header: 'Estado', key: 'state', width: 20 },
+      { header: 'Asesor', key: 'advisor', width: 25 },
+      { header: 'Fecha Entrega', key: 'deliveryDate', width: 20 },
+      { header: 'Fecha Actualización', key: 'updatedAt', width: 20 },
+    ];
+
+    data?.forEach((c) => {
+      sheet.addRow({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        city: c.city,
+        plateNumber: c.plateNumber,
+        state: c.state?.name,
+        advisor: c.advisor?.name || c.advisor?.email || '',
+        deliveryDate: c.deliveryDate
+          ? new Date(c.deliveryDate).toLocaleDateString('es-CO')
+          : '',
+        updatedAt: new Date(c.updatedAt).toLocaleDateString('es-CO'),
+      });
+    });
+
+    sheet.getRow(1).font = { bold: true };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
   }
 
   // Obtener cliente por ID
