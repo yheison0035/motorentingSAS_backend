@@ -195,10 +195,6 @@ export class CustomersService {
     const customer = await this.prisma.customer.findUnique({ where: { id } });
     if (!customer) throw new NotFoundException('Cliente no encontrado');
 
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
-      throw new ForbiddenException('No tienes permiso');
-    }
-
     if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
 
     if (
