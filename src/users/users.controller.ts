@@ -12,6 +12,7 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  Inject,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,10 +21,14 @@ import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guard/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { v2 as Cloudinary } from 'cloudinary';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject('CLOUDINARY') private cloudinary: typeof Cloudinary,
+  ) {}
 
   // Endpoint para subir avatar
   // Autenticación requerida
@@ -87,5 +92,17 @@ export class UsersController {
   @Patch('/:id/toggle-role')
   updateUserSegment(@Param('id', ParseIntPipe) id: number, @Req() req) {
     return this.usersService.updateUserSegment(id, req.user);
+  }
+
+  @Get('test-cloudinary')
+  async testCloudinary() {
+    return this.cloudinary.uploader.upload(
+      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+      {
+        folder: 'avatars',
+        public_id: 'test_image',
+        overwrite: true,
+      },
+    );
   }
 }
