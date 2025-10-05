@@ -63,24 +63,32 @@ export class UsersService {
     };
   }
 
-  // Obtener un usuario
-  async getUser(id: number, user?: any) {
-    const found = await this.prisma.user.findUnique({ where: { id } });
-    if (!found) {
+  // Obtener un usuario por ID
+  async getUserId(id: number, requester?: { role: Role; userId: number }) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
       throw new NotFoundException(`Usuario con id ${id} no fue encontrado`);
     }
 
-    if (user && hasRole(user.role, [Role.ASESOR]) && user.userId !== id) {
+    if (
+      user.role === Role.SUPER_ADMIN &&
+      requester?.role !== Role.SUPER_ADMIN
+    ) {
       throw new ForbiddenException('No tienes permiso para ver este usuario');
     }
 
-    const { password, ...safeData } = found;
+    if (requester?.role === Role.ASESOR && requester.userId !== id) {
+      throw new ForbiddenException('No tienes permiso para ver este usuario');
+    }
+
+    const { password, ...safeData } = user;
+
     return {
       success: true,
       message: 'Usuario obtenido',
       data: {
         ...safeData,
-        birthdate: formatDate(found.birthdate),
+        birthdate: formatDate(user.birthdate),
       },
     };
   }

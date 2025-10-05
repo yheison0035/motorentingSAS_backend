@@ -51,7 +51,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('/:id')
   getUser(@Param('id', ParseIntPipe) id: number, @Req() req) {
-    return this.usersService.getUser(id, req.user);
+    return this.usersService.getUserId(id, req.user);
   }
 
   // Solo ADMIN puede crear usuarios

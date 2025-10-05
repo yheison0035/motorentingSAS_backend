@@ -15,9 +15,6 @@ async function bootstrap() {
     }),
   );
 
-  /* const hash = await bcrypt.hash('123456', 10);
-  console.log(hash); */
-
   // Configuración de Swagger
   const config = new DocumentBuilder()
     .setTitle('API_MotorentingSAS')
@@ -31,6 +28,6 @@ async function bootstrap() {
 
   app.enableCors();
 
-  await app.listen(process.env.PORT || 3002);
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
