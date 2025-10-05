@@ -74,11 +74,12 @@ export class UsersService {
       throw new ForbiddenException('No tienes permiso para ver este usuario');
     }
 
+    const { password, ...safeData } = found;
     return {
       success: true,
       message: 'Usuario obtenido',
       data: {
-        ...found,
+        ...safeData,
         birthdate: formatDate(found.birthdate),
       },
     };
