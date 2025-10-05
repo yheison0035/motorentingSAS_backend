@@ -25,10 +25,7 @@ import { v2 as Cloudinary } from 'cloudinary';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    @Inject('CLOUDINARY') private cloudinary: typeof Cloudinary,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   // Endpoint para subir avatar
   // Autenticación requerida
@@ -41,6 +38,13 @@ export class UsersController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@UploadedFile() file: Express.Multer.File, @Req() req) {
     return this.usersService.updateAvatar(req.user.userId, file);
+  }
+
+  // Endpoint para eliminar avatar
+  @UseGuards(JwtAuthGuard)
+  @Delete('avatar')
+  async deleteAvatar(@Req() req) {
+    return this.usersService.deleteAvatar(req.user.userId);
   }
 
   // Solo ADMIN puede listar todos los usuarios

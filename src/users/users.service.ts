@@ -49,6 +49,50 @@ export class UsersService {
     });
   }
 
+  // Eliminar Avatar
+  async deleteAvatar(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (user.avatar) {
+      const publicId = this.extractPublicIdFromUrl(user.avatar);
+
+      if (publicId) {
+        try {
+          await this.cloudinary.uploader.destroy(publicId);
+        } catch (err) {
+          console.error('Error eliminando imagen de Cloudinary:', err);
+          throw new Error('No se pudo eliminar la imagen en Cloudinary');
+        }
+      }
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { avatar: null },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Avatar eliminado correctamente',
+    };
+  }
+
+  private extractPublicIdFromUrl(url: string): string | null {
+    try {
+      const parts = url.split('/');
+      const filename = parts[parts.length - 1];
+      const folder = parts[parts.length - 2];
+      const publicId = `${folder}/${filename.split('.')[0]}`;
+      return publicId;
+    } catch {
+      return null;
+    }
+  }
+
   // Obtener todos los usuarios (solo SUPER_ADMIN y ADMIN)
   async getUsers(user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
