@@ -64,7 +64,6 @@ export class UsersController {
 
   // ADMIN puede actualizar cualquier usuario
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
   @Put('/:id')
   updateUser(
     @Param('id', ParseIntPipe) id: number,
