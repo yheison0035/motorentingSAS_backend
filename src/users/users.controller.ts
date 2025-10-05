@@ -32,14 +32,25 @@ export class UsersController {
 
   @Get('test-cloudinary')
   async testCloudinary() {
-    return this.cloudinary.uploader.upload(
-      'https://res.cloudinary.com/demo/image/upload/sample.jpg',
-      {
-        folder: 'avatars',
-        public_id: 'test_image',
-        overwrite: true,
-      },
-    );
+    try {
+      const result = await this.cloudinary.uploader.upload(
+        'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+        {
+          folder: 'avatars',
+          public_id: 'test_image',
+          overwrite: true,
+        },
+      );
+      return result;
+    } catch (error) {
+      console.error('❌ Error subiendo a Cloudinary desde Railway:', error);
+      return {
+        status: 'error',
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      };
+    }
   }
 
   // Endpoint para subir avatar
