@@ -35,14 +35,14 @@ async function main() {
   }
 
   // 2. Crear Admin inicial
-  const passwordHash = await bcrypt.hash('Admin123', 10);
+  const passwordHash = await bcrypt.hash('Yorki9316*', 10);
 
   await prisma.user.upsert({
-    where: { email: 'super_admin@motorenting.com' },
+    where: { email: 'MOTORENTING.COLOMBIA.SAS@GMAIL.COM' },
     update: {},
     create: {
-      name: 'Yordi',
-      email: 'super_admin@motorenting.com',
+      name: 'Yordi Diaz',
+      email: 'MOTORENTING.COLOMBIA.SAS@GMAIL.COM',
       password: passwordHash,
       role: Role.SUPER_ADMIN,
     },
