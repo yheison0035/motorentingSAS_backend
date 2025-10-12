@@ -49,7 +49,7 @@ export class UsersController {
 
   // Solo ADMIN puede listar todos los usuarios
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN', 'SUPER_ADMIN', 'COORDINADOR')
   @Get()
   getAllUsers(@Req() req) {
     return this.usersService.getUsers(req.user); // se pasa user para validar permisos en el service
