@@ -20,9 +20,9 @@ export class CustomersService {
   // Obtener clientes según rol (activos, excluye entregados)
   async getCustomers(user: any) {
     const baseWhere: any = {
-      // excluimos los entregados: VENTA (id 18) con plateNumber
+      // excluimos los entregados: VENTA (id 19) con plateNumber
       NOT: {
-        AND: [{ stateId: 18 }, { plateNumber: { not: null } }],
+        AND: [{ stateId: 19 }, { plateNumber: { not: null } }],
       },
     };
 
@@ -66,7 +66,7 @@ export class CustomersService {
   // Obtener clientes entregados/finalizados
   async getDeliveredCustomers(user: any) {
     const baseWhere: any = {
-      stateId: 18,
+      stateId: 19,
       plateNumber: { not: null },
     };
 
@@ -241,7 +241,7 @@ export class CustomersService {
     if (dto.birthdate) dto.birthdate = new Date(dto.birthdate as any) as any;
 
     if (
-      (dto.deliveryState === 'ENTREGADO' || dto.stateId === 18) &&
+      (dto.deliveryState === 'ENTREGADO' || dto.stateId === 19) &&
       !customer.deliveryDate
     ) {
       dto.deliveryDate = new Date().toISOString(); // guarda fecha actual
