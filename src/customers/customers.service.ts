@@ -337,13 +337,13 @@ export class CustomersService {
     };
   }
 
-  // Importar clientes desde Excel (solo ADMIN)
+  // Importar clientes desde Excel (solo SUPER_ADMIN, ADMIN Y COORDINADOR)
   async importCustomers(file: Express.Multer.File, user: any) {
     if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR])) {
-      throw new ForbiddenException('No tienes permisos');
+      throw new ForbiddenException('No tienes permisos para importar clientes');
     }
 
-    // Leer archivo Excel
+    // Leer archivo Excel desde el buffer
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -353,7 +353,6 @@ export class CustomersService {
       throw new BadRequestException('El archivo está vacío o mal formateado');
     }
 
-    // Buscar el estado por defecto "Sin Contactar"
     const defaultState = await this.prisma.state.findUnique({
       where: { name: 'Sin Contactar' },
     });
@@ -364,31 +363,38 @@ export class CustomersService {
       );
     }
 
-    // Normalizar datos de clientes
-    const customersData = rows.map((row) => {
-      const customer: any = {
-        name: row['name']?.trim(),
-        email: row['email']?.trim(),
-        phone: row['phone']?.toString().trim(),
-        address: row['address']?.trim(),
-        city: row['city']?.trim(),
-        department: row['department']?.trim(),
-        document: row['document']?.toString().trim(),
-        stateId: defaultState.id, // se asigna el estado "Sin Contactar"
-      };
+    const customersData = rows
+      .map((row, index) => {
+        const name = row['name']?.toString().trim();
+        const email = row['email']?.toString().trim();
+        const phone = row['phone']?.toString().trim();
 
-      // Solo incluir birthdate si viene y es válido
-      if (row['birthdate']) {
-        const parsed = new Date(row['birthdate']);
-        if (!isNaN(parsed.getTime())) {
-          customer.birthdate = parsed;
+        if (!name || !email || !phone) {
+          console.warn(`Fila ${index + 2} omitida: faltan campos requeridos`);
+          return null;
         }
-      }
 
-      return customer;
-    });
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          console.warn(`Fila ${index + 2} omitida: email inválido (${email})`);
+          return null;
+        }
 
-    // Insertar clientes en la BD ignorando duplicados
+        return {
+          name,
+          email,
+          phone,
+          stateId: defaultState.id,
+        };
+      })
+      .filter(Boolean);
+
+    if (!customersData.length) {
+      throw new BadRequestException(
+        'No se encontraron filas válidas para importar',
+      );
+    }
+
     const result = await this.prisma.customer.createMany({
       data: customersData,
       skipDuplicates: true,
@@ -396,7 +402,7 @@ export class CustomersService {
 
     return {
       success: true,
-      message: `Importación finalizada: ${result.count} clientes creados (duplicados ignorados)`,
+      message: `Importación completada: ${result.count} clientes creados (duplicados ignorados)`,
       count: result.count,
     };
   }
