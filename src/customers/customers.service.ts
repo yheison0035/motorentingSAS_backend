@@ -362,7 +362,7 @@ export class CustomersService {
       );
     }
 
-    // Columnas válidas del modelo (las que puede traer el Excel)
+    // Columnas válidas según tu modelo
     const validColumns = [
       'name',
       'email',
@@ -400,22 +400,27 @@ export class CustomersService {
         email,
         phone,
         stateId: defaultState.id,
+        address: null,
+        city: null,
+        department: null,
+        document: null,
+        birthdate: null,
+        plateNumber: null,
+        deliveryDate: null,
+        deliveryState: null,
       };
 
+      // Copiar dinámicamente las columnas que existan
       for (const key of validColumns) {
         if (['name', 'email', 'phone'].includes(key)) continue;
         const value = row[key];
         if (value !== undefined && value !== null && value !== '') {
-          customer[key] = value.toString().trim();
-        }
-      }
-
-      if (customer.birthdate) {
-        const parsed = new Date(customer.birthdate);
-        if (!isNaN(parsed.getTime())) {
-          customer.birthdate = parsed;
-        } else {
-          delete customer.birthdate;
+          if (['birthdate', 'deliveryDate'].includes(key)) {
+            const parsed = new Date(value);
+            if (!isNaN(parsed.getTime())) customer[key] = parsed;
+          } else {
+            customer[key] = value.toString().trim();
+          }
         }
       }
 

@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "public"."Customer" ALTER COLUMN "birthdate" DROP NOT NULL,
+ALTER COLUMN "address" DROP NOT NULL,
+ALTER COLUMN "city" DROP NOT NULL,
+ALTER COLUMN "document" DROP NOT NULL,
+ALTER COLUMN "department" DROP NOT NULL;
