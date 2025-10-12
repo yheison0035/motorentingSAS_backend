@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { Role } from '@prisma/client';
+import { Role, Prisma } from '@prisma/client';
 import * as XLSX from 'xlsx';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
@@ -343,7 +343,6 @@ export class CustomersService {
       throw new ForbiddenException('No tienes permisos para importar clientes');
     }
 
-    // Leer archivo Excel desde el buffer
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -363,31 +362,65 @@ export class CustomersService {
       );
     }
 
-    const customersData = rows
-      .map((row, index) => {
-        const name = row['name']?.toString().trim();
-        const email = row['email']?.toString().trim();
-        const phone = row['phone']?.toString().trim();
+    // Columnas válidas del modelo (las que puede traer el Excel)
+    const validColumns = [
+      'name',
+      'email',
+      'phone',
+      'address',
+      'city',
+      'department',
+      'document',
+      'birthdate',
+      'plateNumber',
+      'deliveryDate',
+      'deliveryState',
+    ];
 
-        if (!name || !email || !phone) {
-          console.warn(`Fila ${index + 2} omitida: faltan campos requeridos`);
-          return null;
+    const customersData: Prisma.CustomerCreateManyInput[] = [];
+
+    for (const [index, row] of rows.entries()) {
+      const name = row['name']?.toString().trim();
+      const email = row['email']?.toString().trim();
+      const phone = row['phone']?.toString().trim();
+
+      if (!name || !email || !phone) {
+        console.warn(`Fila ${index + 2} omitida: faltan campos requeridos`);
+        continue;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        console.warn(`Fila ${index + 2} omitida: email inválido (${email})`);
+        continue;
+      }
+
+      const customer: any = {
+        name,
+        email,
+        phone,
+        stateId: defaultState.id,
+      };
+
+      for (const key of validColumns) {
+        if (['name', 'email', 'phone'].includes(key)) continue;
+        const value = row[key];
+        if (value !== undefined && value !== null && value !== '') {
+          customer[key] = value.toString().trim();
         }
+      }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          console.warn(`Fila ${index + 2} omitida: email inválido (${email})`);
-          return null;
+      if (customer.birthdate) {
+        const parsed = new Date(customer.birthdate);
+        if (!isNaN(parsed.getTime())) {
+          customer.birthdate = parsed;
+        } else {
+          delete customer.birthdate;
         }
+      }
 
-        return {
-          name,
-          email,
-          phone,
-          stateId: defaultState.id,
-        };
-      })
-      .filter(Boolean);
+      customersData.push(customer);
+    }
 
     if (!customersData.length) {
       throw new BadRequestException(
