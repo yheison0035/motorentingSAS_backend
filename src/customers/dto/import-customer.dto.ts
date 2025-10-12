@@ -1,6 +1,7 @@
 import { IsString, IsEmail, IsOptional, IsDateString } from 'class-validator';
 
 export class ImportCustomerDto {
+  @IsOptional()
   @IsString()
   name: string;
 
@@ -11,6 +12,7 @@ export class ImportCustomerDto {
   @IsDateString()
   birthdate?: string;
 
+  @IsOptional()
   @IsString()
   phone?: string;
 
@@ -26,6 +28,7 @@ export class ImportCustomerDto {
   @IsString()
   department?: string;
 
+  @IsOptional()
   @IsString()
   document?: string;
 }

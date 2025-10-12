@@ -16,21 +16,26 @@ export class CreateCustomerDto {
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsDateString()
   birthdate: string;
 
   @IsString()
   phone: string;
 
+  @IsOptional()
   @IsString()
   address: string;
 
+  @IsOptional()
   @IsString()
   city: string;
 
+  @IsOptional()
   @IsString()
   department: string;
 
+  @IsOptional()
   @IsString()
   document: string;
 
