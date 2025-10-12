@@ -42,13 +42,13 @@ model State {
 model Customer {
   id            Int            @id @default(autoincrement())
   name          String
-  email         String         @unique
-  birthdate     DateTime
+  email         String
+  birthdate     DateTime?
   phone         String
-  address       String
-  city          String
-  department    String
-  document      String
+  address       String?
+  city          String?
+  department    String?
+  document      String?
   deliveryState DeliveryState?
   deliveryDate  DateTime?     
   plateNumber   String?
