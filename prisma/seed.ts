@@ -8,6 +8,7 @@ const stateCustomer = [
   'INTENTANDO CONTACTAR',
   'REPORTADO',
   'INTERESADO',
+  'NO INTERESADO',
   'CREDIORBE',
   'PROGRESER',
   'SUFI',

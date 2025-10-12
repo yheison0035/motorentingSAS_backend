@@ -31,12 +31,13 @@ export class AuthService {
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
+    const { password, ...safeData } = user;
     return {
       success: true,
       message: 'Login exitoso',
       data: {
         access_token: await this.jwtService.signAsync(payload),
-        user,
+        safeData,
       },
     };
   }
