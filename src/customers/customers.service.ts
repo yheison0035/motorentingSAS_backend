@@ -26,35 +26,36 @@ export class CustomersService {
       },
     };
 
-    const customers = hasRole(user.role, [
+    const isHighRole = hasRole(user.role, [
       Role.SUPER_ADMIN,
       Role.ADMIN,
       Role.COORDINADOR,
-    ])
-      ? await this.prisma.customer.findMany({
-          where: baseWhere,
-          include: {
-            advisor: true,
-            comments: {
-              include: { createdBy: true },
-              orderBy: { createdAt: 'desc' },
-            },
-            state: true,
+    ]);
+
+    const excludeStatesForAdvisor = ['NO INTERESADO', 'REPORTADO'];
+
+    const whereClause = isHighRole
+      ? baseWhere
+      : {
+          ...baseWhere,
+          advisorId: user.userId,
+          state: {
+            name: { notIn: excludeStatesForAdvisor },
           },
-          orderBy: { updatedAt: 'desc' },
-        })
-      : await this.prisma.customer.findMany({
-          where: { ...baseWhere, advisorId: user.userId },
-          include: {
-            advisor: true,
-            comments: {
-              include: { createdBy: true },
-              orderBy: { createdAt: 'desc' },
-            },
-            state: true,
-          },
-          orderBy: { updatedAt: 'desc' },
-        });
+        };
+
+    const customers = await this.prisma.customer.findMany({
+      where: whereClause,
+      include: {
+        advisor: true,
+        comments: {
+          include: { createdBy: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        state: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
 
     return {
       success: true,
