@@ -24,10 +24,19 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (!user) throw new UnauthorizedException('Credenciales inválidas');
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    if (user.status === 'INACTIVE') {
+      throw new UnauthorizedException('Tu usuario está inactivo');
+    }
 
     const isValid = await bcrypt.compare(dto.password, user.password);
-    if (!isValid) throw new UnauthorizedException('Credenciales inválidas');
+    if (!isValid) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
 
