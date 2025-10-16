@@ -381,17 +381,10 @@ export class CustomersService {
 
     for (const [index, row] of rows.entries()) {
       const name = row['name']?.toString().trim();
-      const email = row['email']?.toString().trim();
       const phone = row['phone']?.toString().trim();
 
-      if (!name || !email || !phone) {
+      if (!name || !phone) {
         console.warn(`Fila ${index + 2} omitida: faltan campos requeridos`);
-        continue;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        console.warn(`Fila ${index + 2} omitida: email inválido (${email})`);
         continue;
       }
 
@@ -412,7 +405,7 @@ export class CustomersService {
 
       // Copiar dinámicamente las columnas que existan
       for (const key of validColumns) {
-        if (['name', 'email', 'phone'].includes(key)) continue;
+        if (['name', 'phone'].includes(key)) continue;
         const value = row[key];
         if (value !== undefined && value !== null && value !== '') {
           if (['birthdate', 'deliveryDate'].includes(key)) {
