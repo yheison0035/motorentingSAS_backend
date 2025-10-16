@@ -110,36 +110,49 @@ export class CustomersService {
 
   async exportDeliveredCustomersExcel(user: any): Promise<ArrayBuffer> {
     const { data } = await this.getDeliveredCustomers(user);
-
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet('Clientes Entregados');
 
     sheet.columns = [
       { header: 'ID', key: 'id', width: 10 },
       { header: 'Nombre', key: 'name', width: 25 },
+      { header: 'Documento', key: 'document', width: 25 },
       { header: 'Email', key: 'email', width: 25 },
+      { header: 'Fecha de Nacimiento', key: 'birthdate', width: 25 },
+      { header: 'Dirección', key: 'address', width: 25 },
       { header: 'Teléfono', key: 'phone', width: 15 },
       { header: 'Ciudad', key: 'city', width: 20 },
+      { header: 'Departamento', key: 'department', width: 20 },
       { header: 'Placa', key: 'plateNumber', width: 15 },
       { header: 'Estado', key: 'state', width: 20 },
       { header: 'Asesor', key: 'advisor', width: 25 },
       { header: 'Fecha Entrega', key: 'deliveryDate', width: 20 },
-      { header: 'Fecha Actualización', key: 'updatedAt', width: 20 },
+      { header: 'Estado Entrega', key: 'deliveryState', width: 20 },
+      { header: 'Fecha Creación', key: 'createdAt', width: 20 },
+      { header: 'Ultima Actualización', key: 'updatedAt', width: 20 },
     ];
 
     data?.forEach((c) => {
       sheet.addRow({
         id: c.id,
         name: c.name,
+        document: c.document,
         email: c.email,
+        birthdate: c.birthdate
+          ? new Date(c.birthdate).toLocaleDateString('es-CO')
+          : '',
+        address: c.address,
         phone: c.phone,
         city: c.city,
+        department: c.department,
         plateNumber: c.plateNumber,
         state: c.state?.name,
         advisor: c.advisor?.name || c.advisor?.email || '',
         deliveryDate: c.deliveryDate
           ? new Date(c.deliveryDate).toLocaleDateString('es-CO')
           : '',
+        deliveryState: c.deliveryState,
+        createdAt: new Date(c.createdAt).toLocaleDateString('es-CO'),
         updatedAt: new Date(c.updatedAt).toLocaleDateString('es-CO'),
       });
     });
