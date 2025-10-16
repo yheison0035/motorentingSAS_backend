@@ -397,7 +397,7 @@ export class CustomersService {
 
       const customer: any = {
         name,
-        email,
+        email: null,
         phone,
         stateId: defaultState.id,
         address: null,
