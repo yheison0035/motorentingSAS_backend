@@ -185,7 +185,7 @@ export class CustomersService {
 
   // Crear cliente
   async createCustomer(dto: CreateCustomerDto, user: any) {
-    const existing = await this.prisma.customer.findUnique({
+    const existing = await this.prisma.customer.findFirst({
       where: { email: dto.email },
     });
     if (existing) {
