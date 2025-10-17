@@ -71,7 +71,7 @@ model Comment {
   date        DateTime @default(now())
 
   customerId  Int
-  customer    Customer @relation(fields: [customerId], references: [id])
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   createdById Int
   createdBy   User     @relation(fields: [createdById], references: [id])

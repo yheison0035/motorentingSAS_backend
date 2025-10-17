@@ -282,7 +282,7 @@ export class CustomersService {
 
   // Eliminar cliente
   async deleteCustomer(id: number, user: any) {
-    if (!hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]))
+    if (!hasRole(user.role, [Role.SUPER_ADMIN]))
       throw new ForbiddenException('No tienes permisos');
 
     await this.prisma.customer.delete({ where: { id } });
