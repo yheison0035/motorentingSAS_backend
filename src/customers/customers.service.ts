@@ -20,7 +20,6 @@ export class CustomersService {
   // Obtener clientes según rol (activos, excluye entregados)
   async getCustomers(user: any) {
     const baseWhere: any = {
-      // excluimos los entregados: VENTA (id 19) con plateNumber
       NOT: {
         AND: [{ stateId: 19 }, { plateNumber: { not: null } }],
       },
@@ -65,10 +64,36 @@ export class CustomersService {
       orderBy,
     });
 
+    if (isHighRole) {
+      return {
+        success: true,
+        message: 'Clientes obtenidos correctamente',
+        data: customers,
+      };
+    }
+
+    const sinContactar = customers
+      .filter((c) => c.state?.name === 'Sin Contactar')
+      .sort((a, b) => {
+        const dateA = a.assignedAt ? new Date(a.assignedAt).getTime() : 0;
+        const dateB = b.assignedAt ? new Date(b.assignedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+
+    const otros = customers
+      .filter((c) => c.state?.name !== 'Sin Contactar')
+      .sort((a, b) => {
+        const dateA = new Date(a.updatedAt).getTime();
+        const dateB = new Date(b.updatedAt).getTime();
+        return dateB - dateA;
+      });
+
+    const orderedCustomers = [...sinContactar, ...otros];
+
     return {
       success: true,
       message: 'Clientes obtenidos correctamente',
-      data: customers,
+      data: orderedCustomers,
     };
   }
 
