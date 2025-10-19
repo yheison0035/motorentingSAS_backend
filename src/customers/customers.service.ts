@@ -45,8 +45,12 @@ export class CustomersService {
         };
 
     const orderBy = isHighRole
-      ? { createdAt: 'desc' as const }
-      : [{ assignedAt: 'asc' as const }, { updatedAt: 'desc' as const }];
+      ? [{ updatedAt: 'desc' as const }, { createdAt: 'desc' as const }]
+      : [
+          { assignedAt: 'desc' as const },
+          { createdAt: 'desc' as const },
+          { updatedAt: 'desc' as const },
+        ];
 
     const customers = await this.prisma.customer.findMany({
       where: whereClause,
