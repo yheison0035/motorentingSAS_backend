@@ -60,7 +60,8 @@ model Customer {
   state     State?  @relation(fields: [stateId], references: [id])
 
   comments  Comment[]
-
+  assignedAt DateTime?
+  
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }

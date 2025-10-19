@@ -44,17 +44,21 @@ export class CustomersService {
           },
         };
 
+    const orderBy = isHighRole
+      ? { createdAt: 'desc' as const }
+      : [{ assignedAt: 'asc' as const }, { updatedAt: 'desc' as const }];
+
     const customers = await this.prisma.customer.findMany({
       where: whereClause,
       include: {
         advisor: true,
         comments: {
           include: { createdBy: true },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: 'desc' as const },
         },
         state: true,
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy,
     });
 
     return {
@@ -208,13 +212,16 @@ export class CustomersService {
     }
 
     let advisorId: number | null | undefined = dto.advisorId;
+    let assignedAt: Date | null = null;
+
     if (hasRole(user.role, [Role.ASESOR])) {
       advisorId = user.userId;
+      assignedAt = null;
     } else if (
-      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN]) &&
-      !dto.advisorId
+      hasRole(user.role, [Role.SUPER_ADMIN, Role.ADMIN, Role.COORDINADOR]) &&
+      dto.advisorId
     ) {
-      advisorId = null;
+      assignedAt = new Date();
     }
 
     const birthdate = new Date(dto.birthdate);
@@ -233,6 +240,7 @@ export class CustomersService {
         birthdate,
         advisorId,
         stateId,
+        assignedAt,
       },
       include: {
         advisor: { select: { id: true, email: true } },
@@ -324,7 +332,7 @@ export class CustomersService {
 
     const updated = await this.prisma.customer.update({
       where: { id: customerId },
-      data: { advisorId },
+      data: { advisorId, assignedAt: new Date() },
       include: { advisor: true, state: true },
     });
 
@@ -340,7 +348,7 @@ export class CustomersService {
 
     const result = await this.prisma.customer.updateMany({
       where: { id: { in: customerIds } },
-      data: { advisorId },
+      data: { advisorId, assignedAt: new Date() },
     });
 
     return {
