@@ -26,13 +26,20 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, document); // Ruta => http://localhost:3000/api-docs
 
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://crm-motorenting.vercel.app',
-      'https://motorentingsasfrontend-production.up.railway.app', // si tienes un dominio en producción
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Authorization',
+    origin: (origin, callback) => {
+      const allowed = [
+        'http://localhost:3000',
+        'https://crm-motorenting.vercel.app',
+        'https://crm-motorenting-mocha.vercel.app',
+        'https://motorentingsasfrontend-production.up.railway.app',
+        'https://crm.motorentingsas.com',
+      ];
+      if (!origin || allowed.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
