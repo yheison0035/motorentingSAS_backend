@@ -33,6 +33,7 @@ async function bootstrap() {
         'https://crm-motorenting-mocha.vercel.app',
         'https://motorentingsasfrontend-production.up.railway.app',
         'https://crm.motorentingsas.com',
+        'https://motorentingsasbackend-staging.up.railway.app',
       ];
       if (!origin || allowed.includes(origin)) {
         callback(null, true);
